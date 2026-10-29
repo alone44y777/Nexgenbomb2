@@ -1,44 +1,54 @@
 export default async function handler(req, res) {
-  // Extract phone and count from your API request
+  // CORS taake browser/app se error na aaye
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const phone = req.query.phone;
   const count = req.query.count || 1;
 
   if (!phone) {
-    return res.status(400).json({ error: "Phone parameter is required" });
+    return res.status(400).json({ 
+      error: "Phone parameter is required.", 
+      Developer: "Dev NexGen Tech" 
+    });
   }
 
-  // Target API URL
   const targetApiUrl = `https://smsbomberapi-ruby.vercel.app/api/send?phone=${phone}&count=${count}`;
 
   try {
     const response = await fetch(targetApiUrl);
     let data = await response.json();
 
-    // 1. Group link remove karna 
-    // JSON mein agar explicitly group link ka key hai toh usay delete karega
-    const keysToDelete = ['group_link', 'group', 'telegram', 'whatsapp', 'channel', 'link'];
+    // 1. Ramzan Ahsan aur Job ID ko direct delete karna
+    delete data.dev;
+    delete data.job_id;
+
+    // 2. Baqi faltu links ya groups hatana
+    const keysToDelete = ['group_link', 'group', 'telegram', 'whatsapp', 'channel', 'link', 'owner'];
     
     for (let key in data) {
-      // Agar key ka naam group link se milta hai
       if (keysToDelete.includes(key.toLowerCase())) {
         delete data[key];
-      }
-      // Agar link kisi string message ke andar chupa hua hai, toh URL hata dega
-      else if (typeof data[key] === 'string' && data[key].includes('http')) {
+      } else if (typeof data[key] === 'string' && data[key].includes('http')) {
         data[key] = data[key].replace(/(https?:\/\/[^\s]+)/g, '').trim();
       }
     }
 
-    // 2. Apna custom response add karna
-    data.Developer = "Dev NexGen_Tech_Zone-PK";
+    // 3. Apna naam add karna
+    data.Developer = "Dev NexGen Tech";
     
-    // Final modified response return karna
     res.status(200).json(data);
     
   } catch (error) {
     res.status(500).json({ 
-      error: "Error fetching from target API", 
-      details: error.message 
+      error: "API is currently down or not responding.", 
+      Developer: "Dev NexGen Tech" 
     });
   }
 }
+
